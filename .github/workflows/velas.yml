@@ -1,0 +1,30 @@
+name: Velas Binance 1h
+on:
+  schedule:
+    - cron: "1 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  velas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Buscar velas (só data-api.binance.vision)
+        run: |
+          set -e
+          mkdir -p data
+          for s in ETHUSDT BTCUSDT; do
+            curl -fsS --retry 3 --retry-delay 10 \
+              "https://data-api.binance.vision/api/v3/klines?symbol=$s&interval=1h&limit=1000" \
+              -o "data/${s}_1h.json"
+            python3 -c "import json,sys; d=json.load(open('data/${s}_1h.json')); assert len(d)>100; print('$s', len(d), d[-1][0], d[-1][4])"
+          done
+          date -u +%Y-%m-%dT%H:%M:%SZ > data/atualizado.txt
+      - name: Gravar no repositório
+        run: |
+          git config user.name "velas-bot"
+          git config user.email "velas-bot@users.noreply.github.com"
+          git add data
+          git commit -m "velas $(date -u +%Y-%m-%dT%H:%MZ)" || echo "sem alterações"
+          git push
