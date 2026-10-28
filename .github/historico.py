@@ -60,10 +60,13 @@ def longo(s, i, ms, desde, f):
         out += d
         t = d[-1][0] + ms
     out = sorted({r[0]: r for r in out}.values())[:-1]          # tira a vela em formação
-    for a, b in zip(out, out[1:]):
-        assert b[0] - a[0] == ms, f"buraco {i} {a[0]}"
+    buracos = sum(1 for a, b in zip(out, out[1:]) if b[0] - a[0] != ms)   # a Binance tem paragens antigas: regista, não falha
+    print(s, i, "buracos", buracos)
     json.dump([r[:6] for r in out], open(f, "w"), separators=(",", ":"))
     print(s, i, "longo", len(out))
 for s in ("ETHUSDT", "BTCUSDT"):
+  try:                                       # nunca deixa o histórico longo partir o robô das velas
     longo(s, "1h", 3600000, 1546300800000, f"data/hist/{s}_1h_longo.json")
     longo(s, "15m", 900000, int(time.time() * 1000) - 730 * 86400000, f"data/hist/{s}_15m_2a.json")
+  except BaseException as e:
+    print("histórico longo falhou", s, e)
