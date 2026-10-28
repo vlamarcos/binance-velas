@@ -22,6 +22,7 @@ jobs:
               python3 -c "import json; d=json.load(open('data/${s}_${i}.json')); assert len(d)>100; print('$s $i', len(d), d[-1][0], d[-1][4])"
             done
           done
+          python3 .github/historico.py
           date -u +%Y-%m-%dT%H:%M:%SZ > data/atualizado.txt
       - name: Gravar no repositório
         run: |
