@@ -27,3 +27,21 @@ for s in ("ETHUSDT", "BTCUSDT"):
     json.dump(get(s, "1d"), open(f"data/hist/{s}_1d.json", "w"))
     json.dump(get(s, "1w", "").__getitem__(slice(-500, None)), open(f"data/hist/{s}_1w.json", "w"))
     print(s, "histórico", len(out))
+
+# 28 out 2026 (pedido do Marcos: visão de todos os timeframes): histórico 15m ~6 meses, compacto (t,o,h,l,c,v).
+# Só se faltar o ficheiro: depois disso o histórico 15m cresce localmente com os ficheiros de 1000 velas.
+for s in ("ETHUSDT", "BTCUSDT"):
+    f15 = f"data/hist/{s}_15m_6m.json"
+    if os.path.exists(f15):
+        continue
+    os.makedirs("data/hist", exist_ok=True)
+    out, end = [], ""
+    for _ in range(18):                      # 18 x 1000 velas 15m ≈ 6,25 meses
+        d = get(s, "15m", end)
+        out = d + out
+        end = f"&endTime={d[0][0] - 1}"
+    out = sorted({r[0]: r for r in out}.values())
+    for a, b in zip(out, out[1:]):
+        assert b[0] - a[0] == 900000, "buraco 15m"
+    json.dump([r[:6] for r in out], open(f15, "w"), separators=(",", ":"))
+    print(s, "histórico 15m", len(out))
